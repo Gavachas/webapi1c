@@ -6,6 +6,7 @@ import java.util.List;
 
 import javax.transaction.Transactional;
 
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ru.avselectro.webapi1c.domain.WebAPIRequest;
 import ru.avselectro.webapi1c.domain.WebAPIRole;
 import ru.avselectro.webapi1c.domain.WebAPIUser;
 import ru.avselectro.webapi1c.repository.*;
@@ -23,6 +25,7 @@ import ru.avselectro.webapi1c.repository.*;
 public class UserServiceImp implements UserService, UserDetailsService {
 	private final UserRepository userRepo;
 	private final RoleRepository roleRepo;
+	private final RequestRepository requestRepo;
 	private final PasswordEncoder passwordEncoder;
 	
 	@Override
@@ -54,7 +57,7 @@ public class UserServiceImp implements UserService, UserDetailsService {
 		log.info("Saving new role {} to the database", role.getName());
 		return roleRepo.save(role);
 	}
-
+	
 	@Override
 	public void addRoleToUser(String userName, String roleName) {
 		log.info("Adding role {} to user {}", userName, roleName);
@@ -74,6 +77,13 @@ public class UserServiceImp implements UserService, UserDetailsService {
 		log.info("Fetching all users"); 
 		return userRepo.findAll();
 	}
+
+	@Override
+	public WebAPIRequest addRequest(WebAPIRequest request) {
+		log.info("New request");
+		return requestRepo.save(request);
+	}
+
 
 
 }

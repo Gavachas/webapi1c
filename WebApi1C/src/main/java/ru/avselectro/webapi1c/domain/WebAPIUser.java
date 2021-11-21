@@ -24,5 +24,5 @@ public class WebAPIUser {
 	
 	@ManyToMany(fetch = FetchType.EAGER)
 	private Collection<WebAPIRole> roles = new ArrayList<>();
-	
+
 }

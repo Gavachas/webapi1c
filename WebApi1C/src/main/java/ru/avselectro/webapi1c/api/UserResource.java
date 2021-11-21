@@ -6,6 +6,9 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import java.io.IOException;
 import java.net.URI;
 import java.sql.Date;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,8 +17,14 @@ import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.tomcat.util.http.parser.Authorization;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowCallbackHandler;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -33,6 +42,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import ru.avselectro.webapi1c.domain.WebAPIRequest;
 import ru.avselectro.webapi1c.domain.WebAPIRole;
 import ru.avselectro.webapi1c.domain.WebAPIUser;
 import ru.avselectro.webapi1c.service.UserService;
@@ -42,6 +52,8 @@ import ru.avselectro.webapi1c.service.UserService;
 @RequiredArgsConstructor
 public class UserResource {
 	private final UserService userService;
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
 	@GetMapping("/users")
 	public ResponseEntity<List<WebAPIUser>>getUsers() {
 		return ResponseEntity.ok().body(userService.getUsers());
@@ -65,13 +77,13 @@ public class UserResource {
 		return ResponseEntity.ok().build();
 	}	
 	
-	@PostMapping("/role/refresh")
+	@GetMapping("/token/refresh")
 	public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws JsonGenerationException, JsonMappingException, IOException {
 		String authorizationHeader = request.getHeader(AUTHORIZATION);
 		if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
 			try {
 				String refresh_token = authorizationHeader.substring("Bearer ".length());
-				Algorithm algorithm = Algorithm.HMAC256("secret".getBytes());
+				Algorithm algorithm = Algorithm.HMAC256("htpretyvcmewotvb".getBytes());
 				JWTVerifier verifier = JWT.require(algorithm).build();
 				DecodedJWT decodedJWT = verifier.verify(refresh_token);
 				String username = decodedJWT.getSubject();
@@ -96,13 +108,53 @@ public class UserResource {
 				// response.sendError(403);
 				Map<String, String> error = new HashMap<>();
 				error.put("error_message", exception.getMessage());
-				response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+				
 				new ObjectMapper().writeValue(response.getOutputStream(), error);
 			}
 		} else {
 			throw new RuntimeException("Refresh token is missing");
 
 		}
+	}
+	
+	@PostMapping("/request/write")
+	public void runRequestToDB (HttpServletRequest request, HttpServletResponse response, @RequestBody String query) throws JsonGenerationException, JsonMappingException, IOException  {
+		String ip = request.getRemoteAddr();
+		Map<String, List<String>> result = new HashMap<>();
+		
+		RowCallbackHandler rowCallbaskHandler = new RowCallbackHandler() {
+
+			@Override
+			public void processRow(ResultSet rs) throws SQLException {
+				ArrayList<String> rowData = new ArrayList<>();
+				int columns = rs.getMetaData().getColumnCount();
+				 for (int i = 1; i <= columns; i++){
+
+					rowData.add(rs.getString(i));
+				 }
+				 result.put(String.valueOf(rs.getRow()), rowData);
+			}
+
+		};
+		
+		response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+		jdbcTemplate.query(query, rowCallbaskHandler);
+		WebAPIUser user = userService.getUser(SecurityContextHolder.getContext().getAuthentication().getName());		
+		WebAPIRequest webreq = new WebAPIRequest(user, query, ip);
+		userService.addRequest(webreq);
+		
+		
+		try {
+			
+			new ObjectMapper().writeValue(response.getOutputStream(), result);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			Map<String, String> error = new HashMap<>();
+			error.put("error_message", e.getMessage());
+			
+			new ObjectMapper().writeValue(response.getOutputStream(), e);
+
+		};	
 	}
 }
 
