@@ -8,6 +8,7 @@ import java.net.URI;
 import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -139,8 +140,15 @@ public class UserResource {
 		
 		response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 		jdbcTemplate.query(query, rowCallbaskHandler);
-		WebAPIUser user = userService.getUser(SecurityContextHolder.getContext().getAuthentication().getName());		
-		WebAPIRequest webreq = new WebAPIRequest(user, query, ip);
+		WebAPIUser user = userService.getUser(SecurityContextHolder.getContext().getAuthentication().getName());
+		WebAPIRequest webreq = new WebAPIRequest();		
+		webreq.setIp(ip);
+		webreq.setUser(user);
+		webreq.setRequest(query);
+		webreq.setModifiedDate(new Timestamp(System.currentTimeMillis()));
+		
+		
+		//WebAPIRequest webreq = new WebAPIRequest(user, query, ip);
 		userService.addRequest(webreq);
 		
 		

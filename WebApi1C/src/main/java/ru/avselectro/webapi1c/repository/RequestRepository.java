@@ -5,5 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import ru.avselectro.webapi1c.domain.WebAPIRequest;
 
 public interface RequestRepository extends JpaRepository<WebAPIRequest, Integer> {
-	WebAPIRequest findByName(String name);
+	//WebAPIRequest findByName(String name);
 }

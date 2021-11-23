@@ -1,6 +1,7 @@
 package ru.avselectro.webapi1c.domain;
 
 import java.sql.Date;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -26,19 +27,13 @@ public class WebAPIRequest {
 	private Integer id;
     @OneToOne(fetch = FetchType.EAGER)    
 	private WebAPIUser user;
-    @Column(nullable = false)
+    
 	private String request;
-	@Column(nullable = false)
-	private Date modifiedDate;
 	
-	@Column(nullable = false, length = 15)
+	private Timestamp modifiedDate;
+	
+	@Column(length = 15)
 	
 	private String ip;
 	 
-	public WebAPIRequest(WebAPIUser user, String request, String ip) {
-		this.ip = ip;
-		this.user = user;
-		this.request = request;
-		this.modifiedDate = new Date(System.currentTimeMillis());
-	}
 }

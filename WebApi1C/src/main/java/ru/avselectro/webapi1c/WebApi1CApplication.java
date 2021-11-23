@@ -13,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import ru.avselectro.webapi1c.domain.WebAPIRequest;
 import ru.avselectro.webapi1c.domain.WebAPIRole;
 import ru.avselectro.webapi1c.domain.WebAPIUser;
+import ru.avselectro.webapi1c.repository.RequestRepository;
 import ru.avselectro.webapi1c.service.UserService;
 
 @SpringBootApplication
@@ -25,16 +26,19 @@ public class WebApi1CApplication {
 	PasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();
 	}	
-
+	
+/*	@Bean
+	WebAPIRequest requestRepo() {
+		return new WebAPIRequest();
+	}	*/
 	@Bean
 	CommandLineRunner run(UserService userService) {
 		return args -> {
+			
 			userService.saveRole(new WebAPIRole(null, "ROLE_USER"));			
 			userService.saveRole(new WebAPIRole(null, "ROLE_ADMIN"));
 			
 			userService.saveUser(new WebAPIUser(null, "admin_avs", "admin_avs", "asDfgK001hg", new ArrayList<>()));
-			//userService.saveUser(new WebAPIUser(null, "user_test", "user_test", "ds23xcvuy", new ArrayList<>()));
-			
 			userService.addRoleToUser("admin_avs", "ROLE_ADMIN");			
 			
 			
